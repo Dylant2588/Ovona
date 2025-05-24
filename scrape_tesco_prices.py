@@ -20,7 +20,8 @@ for ingredient in INGREDIENTS:
     print(f"Scraping: {ingredient}")
     search_url = BASE_URL.format(ingredient.replace(" ", "%20"))
     response = requests.get(search_url, headers=HEADERS, timeout=10)
-    if response.status_code != 200:
+
+if response.status_code != 200:
     print(f"⚠️ Failed to fetch {ingredient}")
     results[ingredient] = {
         "product": "Unavailable",
@@ -29,6 +30,7 @@ for ingredient in INGREDIENTS:
         "url": None
     }
     continue
+Make sure this whole ch
     soup = BeautifulSoup(response.text, "html.parser")
 
     product_card = soup.find("div", class_="product-list--list-item")
