@@ -92,6 +92,9 @@ def estimate_costs(grouped_ingredients: Dict[str, Dict[str, float]]) -> Tuple[Li
             if item not in TESCO_PRICES:
                 label += "  *"
             shopping_list.append(label)
-            total_cost += price * quantity
+            try:
+                total_cost += price * float(quantity)
+            except (TypeError, ValueError):
+                total_cost += price
 
     return shopping_list, total_cost
