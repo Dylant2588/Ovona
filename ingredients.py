@@ -6,6 +6,21 @@ from collections import defaultdict
 with open("tesco_prices.json", "r") as f:
     TESCO_PRICES = json.load(f)
 
+CATEGORY_MAP = {
+    "meat": ["chicken", "beef", "mince", "steak", "pork", "salmon", "turkey"],
+    "vegetables": ["carrot", "broccoli", "spinach", "pepper", "lettuce", "onion", "potato", "tomato"],
+    "fruit": ["banana", "apple", "orange", "avocado", "berries"],
+    "cupboard": ["rice", "pasta", "stock", "oats", "almond", "oil", "spice", "salt", "pepper"],
+    "dairy": ["milk", "cheese", "yogurt", "butter", "egg"],
+    "other": []
+}
+
+def get_category(ingredient):
+    for category, keywords in CATEGORY_MAP.items():
+        if any(k in ingredient for k in keywords):
+            return category
+    return "other"
+
 def extract_ingredients(text):
     ingredients = []
     lines = text.splitlines()
@@ -20,36 +35,40 @@ def extract_ingredients(text):
     return ingredients
 
 def estimate_costs(ingredients):
-    totals = defaultdict(lambda: {"quantity": 0.0, "unit": "", "price": 0.0, "url": None})
+    grouped = defaultdict(lambda: defaultdict(lambda: {"quantity": 0.0, "unit": "", "price": 0.0, "url": None}))
+    total = 0.0
+
     for item in ingredients:
         item_lower = item.lower()
         match = next((key for key in TESCO_PRICES if key in item_lower), None)
+        quantity_match = re.search(r"(\d+)(g|kg|ml|l)?", item_lower)
+        qty = float(quantity_match.group(1)) if quantity_match else 1.0
+        unit = quantity_match.group(2) if quantity_match else ""
+        category = get_category(item_lower)
+        key = match if match else item_lower
 
         if match:
             data = TESCO_PRICES[match]
-            # Try to extract quantity if it exists (e.g., "200g chicken breast")
-            quantity_match = re.search(r"(\d+)(g|kg|ml|l)?", item_lower)
-            qty = float(quantity_match.group(1)) if quantity_match else 1.0
-            unit = quantity_match.group(2) if quantity_match else ""
-
-            # Use match key as the canonical name
-            totals[match]["quantity"] += qty
-            totals[match]["unit"] = unit or data.get("unit", "")
-            totals[match]["price"] = data["price"]
-            totals[match]["url"] = data["url"]
+            grouped[category][key]["quantity"] += qty
+            grouped[category][key]["unit"] = unit or data.get("unit", "")
+            grouped[category][key]["price"] = data["price"]
+            grouped[category][key]["url"] = data["url"]
+            total += data["price"]
         else:
-            totals[item]["quantity"] += 1.0
-            totals[item]["unit"] = ""
-            totals[item]["price"] = 2.00
-            totals[item]["url"] = None
+            grouped[category][key]["quantity"] += qty
+            grouped[category][key]["unit"] = unit
+            grouped[category][key]["price"] = 2.00
+            grouped[category][key]["url"] = None
+            total += 2.00
 
     shopping_list = []
-    total = 0.0
-    for item, info in totals.items():
-        line = f"{item} – {info['quantity']:.0f}{info['unit']} – ~£{info['price']:.2f}"
-        if info["url"]:
-            line += f" ([View]({info['url']}))"
-        shopping_list.append(line)
-        total += info["price"]
+    for category in sorted(grouped.keys()):
+        shopping_list.append(f"**{category.title()}**")
+        for item, info in grouped[category].items():
+            line = f"- {item} – {info['quantity']:.0f}{info['unit']}"
+            if info["url"]:
+                line += f" ([View]({info['url']}))"
+            shopping_list.append(line)
+        shopping_list.append("")  # spacer line
 
     return shopping_list, total
