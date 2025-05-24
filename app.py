@@ -46,3 +46,5 @@ Include breakfast, lunch, dinner with calorie estimates. Simple meals.
         st.markdown("\n".join(shopping_list))
         st.markdown(f"**Estimated Total Cost: ~£{total:.2f}**")
         st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
+        st.write("🧾 Raw Plan Output:")
+        st.code(plan)
