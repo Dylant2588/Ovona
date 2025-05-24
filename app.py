@@ -85,28 +85,20 @@ if st.button("Generate Plan"):
 Generate a {days}-day meal plan for a {profile['gender']} named {profile['name']} who weighs {profile['weight']} kg, lives a {profile['lifestyle']} lifestyle, and wants to {profile['goal']}.
 Allergies: {profile['allergies']}. Diet type: {profile['diet_type']}. Avoid: {profile['dislikes']}.
 
-Use approximately {target} kcal per day (±100 kcal).
+Use approximately {target} kcal per day (±100 kcal). Use moderate portions for an average adult. Do not exceed 2800 kcal total unless specifically instructed.
 
-For each day, use exactly this structure:
+Each meal should be:
+- Simple
+- Contain ingredients that are low-cost in the UK
+- Avoid premium meats (limit beef/salmon/prawns)
+- Prioritize chicken, turkey, eggs, beans, lentils, oats, rice, and vegetables
 
-Day X
-  Breakfast (YYY kcal): Meal description
-  Lunch (YYY kcal): Meal description
-  Dinner (YYY kcal): Meal description
-  Total: ZZZ kcal
-  Ingredients: item1 (qty), item2 (qty), …
+All ingredients must be listed with UK-friendly shopping quantities. For example:
+- Eggs – 6 eggs
+- Brown rice – 1kg
+- Chicken breast – 500g
 
-At the end, include a Weekly Shopping List grouped by category, e.g.:
-
-Meat
-  - Chicken breast – 1 kg
-  - Salmon fillets – 2 × 150 g
-
-Vegetables
-  - Carrots – 1 kg
-  - Broccoli – 500 g
-
-Ensure realistic servings, precise quantities, and simple cooking methods.
+Ensure realistic servings, precise quantities, and simple cooking methods. And precise calories
 """
         plan = generate_meal_plan(prompt, st.secrets["OPENAI_API_KEY"])
 
