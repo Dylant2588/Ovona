@@ -150,24 +150,26 @@ Ensure realistic servings, precise quantities, and simple cooking methods.
             st.write(f"Day {day}: {cals} kcal")
 
         # Plot bar chart of calorie intake
-        import pandas as pd
-        cal_df = pd.DataFrame({"Day": list(calories.keys()), "Calories": list(calories.values())})
-        cal_df = cal_df.set_index("Day")
-        st.subheader("📊 Weekly Calorie Breakdown")
         import matplotlib.pyplot as plt
+import pandas as pd
+
+cal_df = pd.DataFrame({"Day": list(calories.keys()), "Calories": list(calories.values())})
+cal_df = cal_df.set_index("Day")
+
+st.subheader("📊 Weekly Calorie Breakdown")
 
 # --- Custom Calorie Chart ---
 fig, ax = plt.subplots(figsize=(8, 4))
 bars = ax.bar(cal_df.index, cal_df["Calories"], color="#4CAF50", alpha=0.8)
 
-# Target line (e.g. 2000 kcal)
-target = target  # from earlier calculation
+# Target line
 ax.axhline(target, color='red', linestyle='--', linewidth=1.5, label=f"Target: {target} kcal")
 
 # Add labels on bars
 for bar in bars:
     height = bar.get_height()
-    ax.text(bar.get_x() + bar.get_width() / 2, height + 30, f'{int(height)} kcal', ha='center', va='bottom', fontsize=8)
+    ax.text(bar.get_x() + bar.get_width() / 2, height + 30, f'{int(height)} kcal',
+            ha='center', va='bottom', fontsize=8)
 
 ax.set_ylabel("Calories")
 ax.set_title("Calorie Intake per Day")
@@ -175,8 +177,6 @@ ax.legend()
 plt.xticks(rotation=30)
 
 st.pyplot(fig)
-    else:
-        st.write("No calorie data available.")
 
     # Shopping list & cost
     shopping_list, total_cost = estimate_costs(ingredients)
