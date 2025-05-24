@@ -178,7 +178,7 @@ Ensure realistic servings, precise quantities, and simple cooking methods.
         )
         st.altair_chart(chart + line + text, use_container_width=True)
     st.subheader("🛒 Weekly Shopping List & Estimated Cost")
-        st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
-        st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
+    st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
+    st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
 
     # Raw output
