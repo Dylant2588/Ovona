@@ -154,7 +154,7 @@ Ensure realistic servings, precise quantities, and simple cooking methods.
         cal_df = pd.DataFrame({"Day": list(calories.keys()), "Calories": list(calories.values())})
         cal_df = cal_df.set_index("Day")
         st.subheader("📊 Weekly Calorie Breakdown")
-        simport matplotlib.pyplot as plt
+        import matplotlib.pyplot as plt
 
 # --- Custom Calorie Chart ---
 fig, ax = plt.subplots(figsize=(8, 4))
