@@ -129,12 +129,11 @@ Use approximately {target} kcal per day (±100 kcal), not exceeding 2800 kcal. K
         )
         st.altair_chart(chart + line + text, use_container_width=True)
 
-    if ingredients:
-        try:
-        shopping_list, total_cost = estimate_costs(ingredients)
-    except Exception as e:
-        st.error(f"Failed to estimate costs: {e}")
-        shopping_list, total_cost = [], 0.0
+   try:
+    shopping_list, total_cost = estimate_costs(ingredients)
+except Exception as e:
+    st.error(f"Failed to estimate costs: {e}")
+    shopping_list, total_cost = [], 0.0
         st.subheader("🛒 Weekly Shopping List & Estimated Cost")
         st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
         st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
