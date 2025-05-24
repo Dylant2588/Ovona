@@ -95,6 +95,6 @@ def estimate_costs(grouped_ingredients: Dict[str, Dict[str, float]]) -> Tuple[Li
             try:
                 total_cost += price * float(quantity)
             except (TypeError, ValueError):
-                total_cost += price
+                total_cost += 2.5  # fallback in case of bad quantity
 
     return shopping_list, total_cost
