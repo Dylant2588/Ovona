@@ -149,34 +149,38 @@ Ensure realistic servings, precise quantities, and simple cooking methods.
         for day, cals in sorted(calories.items()):
             st.write(f"Day {day}: {cals} kcal")
 
-        # Plot bar chart of calorie intake
-        import matplotlib.pyplot as plt
-        import pandas as pd
-        cal_df = pd.DataFrame({"Day": list(calories.keys()), "Calories": list(calories.values())})
-        cal_df = cal_df.set_index("Day")
-        st.subheader("📊 Weekly Calorie Breakdown")
-        fig, ax = plt.subplots(figsize=(8, 4))
-        bars = ax.bar(cal_df.index, cal_df["Calories"], color="#4CAF50", alpha=0.8)
-        ax.axhline(target, color='red', linestyle='--', linewidth=1.5, label=f"Target: {target} kcal")
-        for bar in bars:
-            height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width() / 2, height + 30, f'{int(height)} kcal',
-                    ha='center', va='bottom', fontsize=8)
-        ax.set_ylabel("Calories")
-        ax.set_title("Calorie Intake per Day")
-        ax.legend()
-        plt.xticks(rotation=30)
-        st.pyplot(fig)
-    else:
-        st.write("No calorie data available.")
+        import altair as alt
+import pandas as pd
 
-    # Shopping list & cost
-    shopping_list, total_cost = estimate_costs(ingredients)
-    st.subheader("🛒 Weekly Shopping List & Estimated Cost")
-    st.markdown("\n".join(shopping_list))
-    st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
-    st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
+cal_df = pd.DataFrame({
+    "Day": list(calories.keys()),
+    "Calories": list(calories.values())
+})
 
-    # Raw output
-    st.subheader("🧾 Raw Plan Output")
-    st.code(plan)
+# Create Altair bar chart
+target_line = target  # from earlier
+st.subheader("📊 Weekly Calorie Breakdown")
+
+chart = alt.Chart(cal_df).mark_bar(color="#4CAF50").encode(
+    x=alt.X("Day", sort=list(calories.keys())),
+    y=alt.Y("Calories")
+).properties(
+    width=600,
+    height=400,
+    title="Daily Calorie Intake"
+)
+
+# Add target line overlay
+line = alt.Chart(pd.DataFrame({
+    "y": [target_line]
+})).mark_rule(color="red", strokeDash=[5, 5]).encode(y="y")
+
+text = alt.Chart(cal_df).mark_text(
+    align="center", dy=-10, size=12
+).encode(
+    x="Day",
+    y="Calories",
+    text="Calories"
+)
+
+st.altair_chart(chart + line + text, use_container_width=True)
