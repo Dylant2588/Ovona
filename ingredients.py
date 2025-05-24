@@ -75,7 +75,7 @@ def extract_ingredients(text: str) -> Tuple[Dict[str, Dict[str, float]], Dict[st
 
     return ingredients, calories_by_day
 
-def estimate_costs(grouped_ingredients: Dict[str, Dict[str, float]]) -> Tuple[List[str], float]:
+ddef estimate_costs(grouped_ingredients: Dict[str, Dict[str, float]]) -> Tuple[List[str], float]:
     total_cost = 0.0
     shopping_list = []
     fallback_cost = 2.5
@@ -88,13 +88,16 @@ def estimate_costs(grouped_ingredients: Dict[str, Dict[str, float]]) -> Tuple[Li
         for unit, quantity in unit_map.items():
             display_qty = f"{quantity:.0f}{unit}" if unit else f"{int(quantity)}"
             price = TESCO_PRICES.get(item, fallback_cost)
+
             label = f"{item.title()} – {display_qty}"
             if item not in TESCO_PRICES:
                 label += "  *"
+            
             shopping_list.append(label)
-            try:
-                total_cost += price * float(quantity)
-            except (TypeError, ValueError):
-                total_cost += 2.5  # fallback in case of bad quantity
 
-    return shopping_list, total_cost
+            try:
+                total_cost += float(price) * float(quantity)
+            except Exception:
+                total_cost += fallback_cost  # Add fallback in case of error
+
+    return shopping_list, float(total_cost)
