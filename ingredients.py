@@ -8,9 +8,9 @@ with open("tesco_prices.json", "r") as f:
 
 CATEGORY_MAP = {
     "meat": ["chicken", "beef", "mince", "steak", "pork", "salmon", "turkey"],
-    "vegetables": ["carrot", "broccoli", "spinach", "pepper", "lettuce", "onion", "potato", "tomato"],
+    "vegetables": ["carrot", "broccoli", "spinach", "pepper", "lettuce", "onion", "potato", "tomato", "zucchini"],
     "fruit": ["banana", "apple", "orange", "avocado", "berries"],
-    "cupboard": ["rice", "pasta", "stock", "oats", "almond", "oil", "spice", "salt", "pepper"],
+    "cupboard": ["rice", "pasta", "stock", "oats", "almond", "oil", "spice", "salt", "pepper", "lentils", "beans", "bread"],
     "dairy": ["milk", "cheese", "yogurt", "butter", "egg"],
     "other": []
 }
@@ -28,22 +28,18 @@ def extract_ingredients(text):
     lines = text.splitlines()
     for line in lines:
         line = line.strip()
-        if re.match(r"(?i)day \d+", line):
+        if re.match(r"(?i)^day \d+", line):
             current_day = int(re.findall(r"\d+", line)[0])
         elif line.lower().startswith("calories"):
             cal_match = re.search(r"(\d+)", line)
             if cal_match:
                 calories_per_day[current_day] += int(cal_match.group(1))
-        elif line.startswith("- "):
-            ingredients.append(line[2:])
         elif "Ingredients:" in line:
             parts = line.split("Ingredients:")[-1]
             items = [i.strip() for i in parts.split(",") if i.strip()]
             ingredients.extend(items)
-        elif any(kw in line.lower() for kw in ["adjust", "ensure", "incorporate"]):
-            continue
-        elif any(char.isalpha() for char in line) and any(char.isdigit() for char in line):
-            ingredients.append(line)
+        elif line.startswith("- ") and len(line.split()) <= 6:
+            ingredients.append(line[2:])
     return ingredients, dict(calories_per_day)
 
 def estimate_costs(ingredients):
@@ -57,7 +53,6 @@ def estimate_costs(ingredients):
         qty = float(quantity_match.group(1)) if quantity_match else 1.0
         unit = quantity_match.group(2) if quantity_match else ""
 
-        # Clean unit output
         if unit == "each":
             unit = ""
         elif unit in ["tub", "pack"]:
@@ -86,7 +81,7 @@ def estimate_costs(ingredients):
     for category in sorted(grouped.keys()):
         shopping_list.append(f"**{category.title()}**")
         for item, info in grouped[category].items():
-            qty_display = f"{info['quantity']:.0f}{info['unit']}".strip()
+            qty_display = f"{info['quantity']:.0f} {info['unit']}".strip()
             line = f"- {item} – {qty_display}"
             if info["url"]:
                 line += f" ([View]({info['url']}))"
