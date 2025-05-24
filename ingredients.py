@@ -28,7 +28,6 @@ def parse_natural_line(line: str) -> Tuple[str, str, float]:
         amount = float(match.group(1))
         raw_unit = (match.group(2) or "").strip().lower()
         name = match.group(3).strip().lower().rstrip(".,")
-
         if raw_unit in UNIT_CONVERSIONS:
             unit, factor = UNIT_CONVERSIONS[raw_unit]
             return name, unit, amount * factor
@@ -81,7 +80,6 @@ def estimate_costs(grouped_ingredients: Dict[str, Dict[str, float]]) -> Tuple[Li
         is_pantry = any(pantry in item for pantry in PANTRY_STAPLES)
         if is_pantry:
             continue
-
         for unit, quantity in unit_map.items():
             display_qty = f"{quantity:.0f}{unit}" if unit else f"{int(quantity)}"
             price = TESCO_PRICES.get(item, fallback_cost)
