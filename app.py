@@ -57,8 +57,8 @@ if not st.session_state.profile:
             with open(deFAULT_PROFILE_DB, "w") as f:
                 json.dump(db, f)
             # Persist query param
-            st.experimental_set_query_params(user=name)
-            st.experimental_rerun()
+            st.set_query_params(user=name)  # persist user in URL
+            # st.experimental_rerun()  # Not needed; Streamlit auto-reruns on form submit
     st.stop()
 
 # --- Main Planner ---
