@@ -6,17 +6,18 @@ with open("tesco_prices.json", "r") as f:
     TESCO_PRICES = json.load(f)
 
 def extract_ingredients(text):
-    lines = text.splitlines()
     ingredients = []
+    lines = text.splitlines()
     for line in lines:
         line = line.strip()
+        # Bullet points
         if line.startswith("- "):
             ingredients.append(line[2:])
+        # Inline Ingredients: chicken, rice, etc
         elif "Ingredients:" in line:
             parts = line.split("Ingredients:")[-1]
-            for item in parts.split(","):
-                if item.strip():
-                    ingredients.append(item.strip())
+            items = [i.strip() for i in parts.split(",") if i.strip()]
+            ingredients.extend(items)
     return ingredients
 
 def estimate_costs(ingredients):

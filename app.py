@@ -23,7 +23,7 @@ days = st.slider("Number of days", 1, 7, 5)
 
 if st.button("Generate Plan"):
     with st.spinner("Generating your plan..."):
-prompt = f"""
+        prompt = f"""
 Generate a {days}-day meal plan for:
 - Weight: {weight}kg
 - Lifestyle: {lifestyle}
@@ -38,7 +38,7 @@ Each day must include:
 3. A bullet-point list of ingredients after each meal, like:
    Ingredients: chicken breast, brown rice, broccoli
 
-Keep meals simple, practical, and varied (include fish for omegas, steak for iron, etc)
+Keep meals simple, practical, and varied (include fish for omegas, steak for iron, etc).
 """
         plan = generate_meal_plan(prompt, st.secrets["OPENAI_API_KEY"])
         st.markdown("---")
@@ -46,14 +46,13 @@ Keep meals simple, practical, and varied (include fish for omegas, steak for iro
         st.markdown(plan)
 
         ingredients = extract_ingredients(plan)
-        st.write("🧪 Extracted Ingredients:")
-        st.write(ingredients)
+        st.write("🧪 Extracted Ingredients:", ingredients)
+
         shopping_list, total = estimate_costs(ingredients)
-        st.write("💷 Total Cost Estimate:")
-        st.write(total)
         st.subheader("🛒 Ingredients + Cost Estimate")
         st.markdown("\n".join(shopping_list))
         st.markdown(f"**Estimated Total Cost: ~£{total:.2f}**")
         st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
-        st.write("🧾 Raw Plan Output:")
+
+        st.subheader("🧾 Raw Plan Output")
         st.code(plan)
