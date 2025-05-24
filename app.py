@@ -88,7 +88,6 @@ Allergies: {profile['allergies']}. Diet type: {profile['diet_type']}. Avoid: {pr
 Use approximately {target} kcal per day (±100 kcal), not exceeding 2800 kcal. Keep meals simple, affordable, and nutrient-dense for an active UK adult.
 
 Prefer affordable ingredients: chicken, turkey, tuna, eggs, oats, lentils, beans, rice, veg.
-
 Avoid: luxury meats (steak, salmon), excessive snacks, duplicate high-calorie items.
 
 Quantities must reflect **weekly totals**. Use UK-friendly shopping formats like:
@@ -97,7 +96,26 @@ Quantities must reflect **weekly totals**. Use UK-friendly shopping formats like
 - Brown rice – 1 kg
 - Milk – 2L semi-skimmed
 
-Ensure realistic servings, precise quantities, and simple cooking methods. And precise calories
+For each day, use exactly this structure:
+
+Day X
+  Breakfast (YYY kcal): Meal description
+  Lunch (YYY kcal): Meal description
+  Dinner (YYY kcal): Meal description
+  Total: ZZZ kcal
+  Ingredients: item1 (qty), item2 (qty), …
+
+At the end, include a Weekly Shopping List grouped by category, e.g.:
+
+Meat
+  - Chicken breast – 1 kg
+  - Turkey mince – 500g
+
+Vegetables
+  - Carrots – 1 kg
+  - Broccoli – 500g
+
+Ensure realistic servings, precise quantities, and simple cooking methods.
 """
         plan = generate_meal_plan(prompt, st.secrets["OPENAI_API_KEY"])
 
