@@ -144,10 +144,17 @@ Ensure realistic servings, precise quantities, and simple cooking methods.
         ingredients, calories = [], {}
 
     # Show calories per day
-    st.subheader("🔥 Calories Per Day")
     if calories:
+        st.subheader("🔥 Calories Per Day")
         for day, cals in sorted(calories.items()):
             st.write(f"Day {day}: {cals} kcal")
+
+        # Plot bar chart of calorie intake
+        import pandas as pd
+        cal_df = pd.DataFrame({"Day": list(calories.keys()), "Calories": list(calories.values())})
+        cal_df = cal_df.set_index("Day")
+        st.subheader("📊 Weekly Calorie Breakdown")
+        st.bar_chart(cal_df)
     else:
         st.write("No calorie data available.")
 
