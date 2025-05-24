@@ -4,28 +4,26 @@ import json
 from meal_plan import generate_meal_plan
 from ingredients import extract_ingredients, estimate_costs
 
-# Constants
-deFAULT_PROFILE_DB = "profiles.json"
+PROFILE_DB = "profiles.json"
 
-# --- Load or initialize profile ---
+# --- Load or initialize session profile ---
 if "profile" not in st.session_state:
     st.session_state.profile = {}
 
-# Try loading profile from session or disk
-if not st.session_state.profile:
-    params = st.experimental_get_query_params()
-    if "user" in params:
-        name = params["user"][0]
-        if os.path.exists(deFAULT_PROFILE_DB):
-            with open(deFAULT_PROFILE_DB, "r") as f:
-                db = json.load(f)
-            if name in db:
-                st.session_state.profile = db[name]
+# Attempt to load saved profiles from disk if session empty
+if not st.session_state.profile and os.path.exists(PROFILE_DB):
+    with open(PROFILE_DB, "r") as f:
+        stored = json.load(f)
+    # If exactly one profile exists, load it automatically (optional)
+    if len(stored) == 1:
+        name, prof = next(iter(stored.items()))
+        st.session_state.profile = prof
 
 # --- Profile Setup ---
 if not st.session_state.profile:
     st.title("👋 Welcome to Ovona AI Meal Planner")
     st.write("Let's set up your profile (we'll remember you next time).")
+
     with st.form(key="profile_form"):
         name = st.text_input("Name")
         gender = st.selectbox("Gender", ["Male", "Female", "Other"])
@@ -35,6 +33,7 @@ if not st.session_state.profile:
         allergies = st.text_input("Allergies (comma-separated)")
         diet_type = st.selectbox("Diet Type", ["Standard", "Vegetarian", "Vegan", "Keto", "High Protein"])
         dislikes = st.text_input("Dislikes or ingredients to avoid")
+
         submitted = st.form_submit_button("Save Profile")
         if submitted and name:
             profile = {
@@ -48,24 +47,27 @@ if not st.session_state.profile:
                 "dislikes": dislikes
             }
             st.session_state.profile = profile
-            # Save to disk
+
+            # save to disk
             db = {}
-            if os.path.exists(deFAULT_PROFILE_DB):
-                with open(deFAULT_PROFILE_DB, "r") as f:
+            if os.path.exists(PROFILE_DB):
+                with open(PROFILE_DB, "r") as f:
                     db = json.load(f)
             db[name] = profile
-            with open(deFAULT_PROFILE_DB, "w") as f:
+            with open(PROFILE_DB, "w") as f:
                 json.dump(db, f)
-            # Persist query param
-            st.set_query_params(user=name)  # persist user in URL
-            # st.experimental_rerun()  # Not needed; Streamlit auto-reruns on form submit
+
+            st.success("Profile saved! Reloading...")
+            st.experimental_rerun()
+
     st.stop()
 
 # --- Main Planner ---
 st.set_page_config(page_title="Ovona AI Meal Planner")
 st.title("🍽️ Ovona AI Meal Planner")
+
 profile = st.session_state.profile
-st.success(f"Hello {profile['name']}! Profile loaded: {profile['gender']}, {profile['weight']}kg, {profile['goal']}")
+st.success(f"Hello {profile['name']}! Profile: {profile['gender']}, {profile['weight']}kg, {profile['goal']}")
 
 days = st.slider("Number of days", 1, 7, 5)
 
@@ -78,6 +80,7 @@ if st.button("Generate Plan"):
             maint = 22 * profile["weight"]
         mult = {"Sedentary":1.2, "Lightly Active":1.375, "Active":1.55, "Athlete":1.725}[profile["lifestyle"]]
         daily_maint = int(maint * mult)
+
         if profile["goal"] == "Lose fat":
             target = daily_maint - 500
         elif profile["goal"] == "Build muscle":
@@ -85,12 +88,12 @@ if st.button("Generate Plan"):
         else:
             target = daily_maint
 
-        # Build prompt
+        # Build the prompt
         prompt = f"""
-Generate a {days}-day meal plan for a {profile['gender']} named {profile['name']} who weighs {profile['weight']} kg, lives a {profile['lifestyle']} lifestyle, and wants to {profile['goal']}.  
-Allergies: {profile['allergies']}. Diet type: {profile['diet_type']}. Avoid: {profile['dislikes']}.  
+Generate a {days}-day meal plan for a {profile['gender']} named {profile['name']} who weighs {profile['weight']} kg, lives a {profile['lifestyle']} lifestyle, and wants to {profile['goal']}.
+Allergies: {profile['allergies']}. Diet type: {profile['diet_type']}. Avoid: {profile['dislikes']}.
 
-Use approximately **{target}** kcal per day (±100 kcal).  
+Use approximately **{target}** kcal per day (±100 kcal).
 
 **For each day**, output exactly this structure:
 
@@ -99,43 +102,36 @@ Day X
   Lunch (YYY kcal): Meal description  
   Dinner (YYY kcal): Meal description  
   **Total: ZZZ kcal**  
-  **Ingredients:** item1 (qty), item2 (qty), …  
+  **Ingredients:** item1 (qty), item2 (qty), …
 
-**At the very end**, after all days, include a single **Weekly Shopping List** section, grouped by category, with each ingredient and total quantity needed for the week, e.g.:
-
+**At the very end**, after all days, include a **Weekly Shopping List** grouped by category:
 **Meat**  
 - Chicken breast – 1 kg  
-- Salmon fillets – 2 × 150 g  
+…
 
-**Vegetables**  
-- Carrots – 1 kg  
-- Broccoli – 500 g  
-
-…and so on.  
-Keep servings realistic and quantities precise.  
-Ensure variety (fish, steak, legumes, etc.) and simple cooking methods.
+Ensure realistic servings, precise quantities, and simple methods.
 """
         plan = generate_meal_plan(prompt, st.secrets["OPENAI_API_KEY"])
 
-    # Output plan
     st.markdown("---")
     st.subheader("📋 Meal Plan")
     st.code(plan)
 
-    # Parse
+    # Parse out ingredients & calories
     ingredients, calories = extract_ingredients(plan)
 
-    # Calories per day
+    # Show calories per day
     st.subheader("🔥 Calories Per Day")
     for day, cals in calories.items():
         st.write(f"**Day {day}** – {cals} kcal")
 
-    # Shopping list & cost
+    # Show shopping list & cost
     shopping_list, total_cost = estimate_costs(ingredients)
     st.subheader("🛒 Weekly Shopping List & Estimated Cost")
     st.markdown("\n".join(shopping_list))
     st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
     st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
 
+    # Raw output
     st.subheader("🧾 Raw Plan Output")
     st.code(plan)
