@@ -45,7 +45,7 @@ Keep meals simple, practical, and varied (include fish for omegas, steak for iro
         st.subheader("📋 Meal Plan")
         st.markdown(plan)
 
-        ingredients = extract_ingredients(plan)
+        ingredients, calories = extract_ingredients(plan)
         st.write("🧪 Extracted Ingredients:", ingredients)
 
         shopping_list, total = estimate_costs(ingredients)
@@ -53,6 +53,10 @@ Keep meals simple, practical, and varied (include fish for omegas, steak for iro
         st.markdown("\n".join(shopping_list))
         st.markdown(f"**Estimated Total Cost: ~£{total:.2f}**")
         st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
+
+        st.subheader("🔥 Calories Per Day")
+        for day, total_cals in calories.items():
+            st.write(f"**Day {day}** – {total_cals} kcal")
 
         st.subheader("🧾 Raw Plan Output")
         st.code(plan)
