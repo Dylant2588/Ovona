@@ -4,28 +4,23 @@ import json
 from meal_plan import generate_meal_plan
 from ingredients import extract_ingredients, estimate_costs
 
-PROFILE_DB = "profiles.json"
+# Constants
+deFAULT_PROFILE_DB = "profiles.json"
 
-# --- Load profile from session or query params or disk ---
-def load_profile():
-    # 1. from session
-    if "profile" in st.session_state and st.session_state.profile:
-        return
-    # 2. from query params
+# --- Load or initialize profile ---
+if "profile" not in st.session_state:
+    st.session_state.profile = {}
+
+# Try loading profile from session or disk
+if not st.session_state.profile:
     params = st.experimental_get_query_params()
     if "user" in params:
         name = params["user"][0]
-        # load from disk
-        if os.path.exists(PROFILE_DB):
-            with open(PROFILE_DB, "r") as f:
+        if os.path.exists(deFAULT_PROFILE_DB):
+            with open(deFAULT_PROFILE_DB, "r") as f:
                 db = json.load(f)
             if name in db:
                 st.session_state.profile = db[name]
-                return
-    # 3. no profile yet
-    st.session_state.profile = {}
-
-load_profile()
 
 # --- Profile Setup ---
 if not st.session_state.profile:
@@ -42,8 +37,7 @@ if not st.session_state.profile:
         dislikes = st.text_input("Dislikes or ingredients to avoid")
         submitted = st.form_submit_button("Save Profile")
         if submitted and name:
-            # save to session
-            st.session_state.profile = {
+            profile = {
                 "name": name,
                 "gender": gender,
                 "weight": weight,
@@ -53,15 +47,16 @@ if not st.session_state.profile:
                 "diet_type": diet_type,
                 "dislikes": dislikes
             }
-            # save to disk
+            st.session_state.profile = profile
+            # Save to disk
             db = {}
-            if os.path.exists(PROFILE_DB):
-                with open(PROFILE_DB, "r") as f:
+            if os.path.exists(deFAULT_PROFILE_DB):
+                with open(deFAULT_PROFILE_DB, "r") as f:
                     db = json.load(f)
-            db[name] = st.session_state.profile
-            with open(PROFILE_DB, "w") as f:
+            db[name] = profile
+            with open(deFAULT_PROFILE_DB, "w") as f:
                 json.dump(db, f)
-            # set query param for persistent recall
+            # Persist query param
             st.experimental_set_query_params(user=name)
             st.experimental_rerun()
     st.stop()
@@ -76,18 +71,53 @@ days = st.slider("Number of days", 1, 7, 5)
 
 if st.button("Generate Plan"):
     with st.spinner("Generating your plan..."):
-        prompt = f"""
-Generate a {days}-day meal plan for a {profile['gender']} named {profile['name']} who weighs {profile['weight']}kg, lives a {profile['lifestyle']} lifestyle, and wants to {profile['goal']}.
-Allergies: {profile['allergies']}. Diet type: {profile['diet_type']}. Avoid: {profile['dislikes']}.
+        # Calculate target calories
+        if profile["gender"] == "Male":
+            maint = 24 * profile["weight"]
+        else:
+            maint = 22 * profile["weight"]
+        mult = {"Sedentary":1.2, "Lightly Active":1.375, "Active":1.55, "Athlete":1.725}[profile["lifestyle"]]
+        daily_maint = int(maint * mult)
+        if profile["goal"] == "Lose fat":
+            target = daily_maint - 500
+        elif profile["goal"] == "Build muscle":
+            target = daily_maint + 300
+        else:
+            target = daily_maint
 
-Each day must include:
-1. Breakfast, lunch, and dinner with calorie estimates in parentheses.
-2. Total calories for the day as 'Total: X kcal'.
-3. A bullet-point list of ingredients after each day, formatted 'Ingredients: chicken breast, carrots, ...'.
-Ensure the plan is varied—include fish for omegas, steak for iron, etc.
+        # Build prompt
+        prompt = f"""
+Generate a {days}-day meal plan for a {profile['gender']} named {profile['name']} who weighs {profile['weight']} kg, lives a {profile['lifestyle']} lifestyle, and wants to {profile['goal']}.  
+Allergies: {profile['allergies']}. Diet type: {profile['diet_type']}. Avoid: {profile['dislikes']}.  
+
+Use approximately **{target}** kcal per day (±100 kcal).  
+
+**For each day**, output exactly this structure:
+
+Day X  
+  Breakfast (YYY kcal): Meal description  
+  Lunch (YYY kcal): Meal description  
+  Dinner (YYY kcal): Meal description  
+  **Total: ZZZ kcal**  
+  **Ingredients:** item1 (qty), item2 (qty), …  
+
+**At the very end**, after all days, include a single **Weekly Shopping List** section, grouped by category, with each ingredient and total quantity needed for the week, e.g.:
+
+**Meat**  
+- Chicken breast – 1 kg  
+- Salmon fillets – 2 × 150 g  
+
+**Vegetables**  
+- Carrots – 1 kg  
+- Broccoli – 500 g  
+
+…and so on.  
+Keep servings realistic and quantities precise.  
+Ensure variety (fish, steak, legumes, etc.) and simple cooking methods.
 """
         plan = generate_meal_plan(prompt, st.secrets["OPENAI_API_KEY"])
 
+    # Output plan
     st.markdown("---")
     st.subheader("📋 Meal Plan")
     st.code(plan)
@@ -102,7 +132,7 @@ Ensure the plan is varied—include fish for omegas, steak for iron, etc.
 
     # Shopping list & cost
     shopping_list, total_cost = estimate_costs(ingredients)
-    st.subheader("🛒 Shopping List & Estimated Cost")
+    st.subheader("🛒 Weekly Shopping List & Estimated Cost")
     st.markdown("\n".join(shopping_list))
     st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
     st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
