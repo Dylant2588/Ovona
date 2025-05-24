@@ -23,16 +23,28 @@ def get_category(ingredient):
 
 def extract_ingredients(text):
     ingredients = []
+    calories_per_day = defaultdict(int)
+    current_day = 1
     lines = text.splitlines()
     for line in lines:
         line = line.strip()
-        if line.startswith("- "):
+        if re.match(r"(?i)day \d+", line):
+            current_day = int(re.findall(r"\d+", line)[0])
+        elif line.lower().startswith("calories"):
+            cal_match = re.search(r"(\d+)", line)
+            if cal_match:
+                calories_per_day[current_day] += int(cal_match.group(1))
+        elif line.startswith("- "):
             ingredients.append(line[2:])
         elif "Ingredients:" in line:
             parts = line.split("Ingredients:")[-1]
             items = [i.strip() for i in parts.split(",") if i.strip()]
             ingredients.extend(items)
-    return ingredients
+        elif any(kw in line.lower() for kw in ["adjust", "ensure", "incorporate"]):
+            continue
+        elif any(char.isalpha() for char in line) and any(char.isdigit() for char in line):
+            ingredients.append(line)
+    return ingredients, dict(calories_per_day)
 
 def estimate_costs(ingredients):
     grouped = defaultdict(lambda: defaultdict(lambda: {"quantity": 0.0, "unit": "", "price": 0.0, "url": None}))
@@ -41,9 +53,18 @@ def estimate_costs(ingredients):
     for item in ingredients:
         item_lower = item.lower()
         match = next((key for key in TESCO_PRICES if key in item_lower), None)
-        quantity_match = re.search(r"(\d+)(g|kg|ml|l)?", item_lower)
+        quantity_match = re.search(r"(\d+)(g|kg|ml|l|each|pack|tub|eggs)?", item_lower)
         qty = float(quantity_match.group(1)) if quantity_match else 1.0
         unit = quantity_match.group(2) if quantity_match else ""
+
+        # Clean unit output
+        if unit == "each":
+            unit = ""
+        elif unit in ["tub", "pack"]:
+            unit += "s"
+        elif unit == "eggs":
+            unit = " eggs"
+
         category = get_category(item_lower)
         key = match if match else item_lower
 
@@ -65,10 +86,11 @@ def estimate_costs(ingredients):
     for category in sorted(grouped.keys()):
         shopping_list.append(f"**{category.title()}**")
         for item, info in grouped[category].items():
-            line = f"- {item} – {info['quantity']:.0f}{info['unit']}"
+            qty_display = f"{info['quantity']:.0f}{info['unit']}".strip()
+            line = f"- {item} – {qty_display}"
             if info["url"]:
                 line += f" ([View]({info['url']}))"
             shopping_list.append(line)
-        shopping_list.append("")  # spacer line
+        shopping_list.append("")
 
     return shopping_list, total
