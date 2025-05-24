@@ -21,6 +21,13 @@ def parse_ingredient_line(line: str) -> Tuple[str, str, float]:
     else:
         return line.strip().lower(), "", 1.0
 
+def is_valid_ingredient(line: str) -> bool:
+    return "(" in line and ")" in line and any(char.isdigit() for char in line)
+
+def clean_name(raw: str) -> str:
+    # Keep main name part, strip off prep notes
+    return raw.lower().split(" with ")[0].split(" and ")[0].strip(" -:")
+
 def extract_ingredients(text: str) -> Tuple[Dict[str, Dict[str, float]], Dict[str, int]]:
     ingredients = defaultdict(lambda: defaultdict(float))
     calories_by_day = {}
@@ -31,20 +38,21 @@ def extract_ingredients(text: str) -> Tuple[Dict[str, Dict[str, float]], Dict[st
         stripped = line.strip()
 
         # Detect Day number
-        if stripped.startswith("📅 Day") or stripped.startswith("Day "):
-            match = re.search(r"Day\s+(\d+)", stripped)
+        if stripped.lower().startswith("day "):
+            match = re.search(r"Day\s+(\d+)", stripped, re.IGNORECASE)
             if match:
                 current_day = f"Day {match.group(1)}"
 
-        # Detect total calories (markdown bold optional)
-        if "Total:" in stripped:
-            kcal_match = re.search(r"Total:\s*(\d+)\s*kcal", stripped)
-            if kcal_match and current_day:
-                calories_by_day[current_day] = int(kcal_match.group(1))
+        # Detect calorie lines like "**Dinner (Approx. 700 kcal)**"
+        kcal_match = re.search(r"(\d+)\s*kcal", stripped, re.IGNORECASE)
+        if kcal_match and current_day:
+            calories_by_day.setdefault(current_day, 0)
+            calories_by_day[current_day] += int(kcal_match.group(1))
 
         # Detect ingredient lines
-        if stripped.startswith("- "):
+        if stripped.startswith("- ") and is_valid_ingredient(stripped):
             name, unit, amount = parse_ingredient_line(stripped[2:])
+            name = clean_name(name)
             ingredients[name][unit] += amount
 
     return ingredients, calories_by_day
@@ -55,16 +63,17 @@ def estimate_costs(grouped_ingredients: Dict[str, Dict[str, float]]) -> Tuple[Li
     fallback_cost = 2.5  # fallback cap
 
     for item, unit_map in grouped_ingredients.items():
-        if item in PANTRY_STAPLES:
+        is_pantry = any(pantry in item for pantry in PANTRY_STAPLES)
+        if is_pantry:
             continue  # skip pantry items
 
         for unit, quantity in unit_map.items():
             display_qty = f"{quantity:.0f}{unit}" if unit else f"{int(quantity)}"
             price = TESCO_PRICES.get(item, fallback_cost)
+            label = f"{item.title()} – {display_qty}"
             if item not in TESCO_PRICES:
-                shopping_list.append(f"{item.title()} – {display_qty}  *")
-            else:
-                shopping_list.append(f"{item.title()} – {display_qty}")
+                label += "  *"
+            shopping_list.append(label)
             total_cost += price * quantity
 
     return shopping_list, total_cost
