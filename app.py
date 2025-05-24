@@ -5,7 +5,7 @@ import json
 import pandas as pd
 import altair as alt
 from meal_plan import generate_meal_plan
-from ingredients_enhanced import extract_ingredients, estimate_costs, PANTRY_STAPLES
+from ingredients import extract_ingredients, estimate_costs, PANTRY_STAPLES
 
 PROFILE_DB = "profiles.json"
 
