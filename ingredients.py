@@ -2,26 +2,33 @@ import re
 import json
 from collections import defaultdict
 
-# Load data at top-level (no indent)
+# Load Tesco prices
 with open("tesco_prices.json", "r") as f:
     TESCO_PRICES = json.load(f)
 
 def extract_ingredients(text):
-    # 4 spaces indent for function body
     ingredients = []
+    calories_by_day = {}
+    current_day = None
+
     lines = text.splitlines()
     for line in lines:
-        # another 4 spaces for loop body
-        line = line.strip()
-        if line.startswith("- "):
-            ingredients.append(line[2:])
-    return ingredients
+        stripped = line.strip()
 
-def estimate_costs(ingredients):
-    # 4 spaces indent again
-    totals = defaultdict(int)
-    for item in ingredients:
-        totals[item] += 1
-    shopping_list = [f"{k}: {v}" for k, v in totals.items()]
-    total_cost = sum(totals.values()) * 2.0
-    return shopping_list, total_cost
+        # Detect Day number
+        if stripped.startswith("📅 Day") or stripped.startswith("Day "):
+            match = re.search(r"Day\s+(\d+)", stripped)
+            if match:
+                current_day = f"Day {match.group(1)}"
+
+        # Detect total calories (markdown bold optional)
+        if "Total:" in stripped:
+            kcal_match = re.search(r"Total:\s*(\d+)\s*kcal", stripped)
+            if kcal_match and current_day:
+                calories_by_day[current_day] = int(kcal_match.group(1))
+
+        # Detect ingredient lines
+        if stripped.startswith("- "):
+            ingredients.append(stripped[2:])
+
+    return ingredients, calories_by_day

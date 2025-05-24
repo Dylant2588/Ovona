@@ -176,16 +176,9 @@ Ensure realistic servings, precise quantities, and simple cooking methods.
             y="Calories",
             text="Calories"
         )
-    # Shopping list & cost
-    if ingredients:
-        shopping_list, total_cost = estimate_costs(ingredients)
-        st.subheader("🛒 Weekly Shopping List & Estimated Cost")
-        st.markdown("\n".join(shopping_list))
+        st.altair_chart(chart + line + text, use_container_width=True)
+    st.subheader("🛒 Weekly Shopping List & Estimated Cost")
         st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
         st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
-    else:
-        st.warning("No ingredients were parsed. Shopping list and cost estimate unavailable.")
 
     # Raw output
-    st.subheader("🧾 Raw Plan Output")
-    st.code(plan)
