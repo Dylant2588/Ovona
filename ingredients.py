@@ -1,3 +1,4 @@
+
 import re
 import json
 from collections import defaultdict
@@ -32,3 +33,11 @@ def extract_ingredients(text):
             ingredients.append(stripped[2:])
 
     return ingredients, calories_by_day
+
+def estimate_costs(ingredients):
+    totals = defaultdict(int)
+    for item in ingredients:
+        totals[item] += 1
+    shopping_list = [f"{k}: {v}" for k, v in totals.items()]
+    total_cost = sum(totals.values())
+    return shopping_list, total_cost
