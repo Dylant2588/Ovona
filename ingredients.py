@@ -65,6 +65,6 @@ def estimate_costs(grouped_ingredients: Dict[str, Dict[str, float]]) -> Tuple[Li
                 shopping_list.append(f"{item.title()} – {display_qty}  *")
             else:
                 shopping_list.append(f"{item.title()} – {display_qty}")
-            total_cost += price  # simplified per-item cost
+            total_cost += price * quantity
 
     return shopping_list, total_cost
