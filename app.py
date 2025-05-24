@@ -50,7 +50,8 @@ Create a meal plan for {days} days, with breakfast, lunch, and dinner.
 Each meal should include a calorie estimate. Keep it simple and repeatable when possible.
 Output in a clear, easy-to-read format. I also need you to think of things like, when last did this person have Fish? Etc, and rotate that into their diet for micro nutrients.
 """
-            response = openai.ChatCompletion.create(
+            client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+            response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.7
