@@ -5,7 +5,7 @@ import json
 import pandas as pd
 import altair as alt
 from meal_plan import generate_meal_plan
-from ingredients import extract_ingredients, estimate_costs, PANTRY_STAPLES
+from ingredients_enhanced import extract_ingredients, estimate_costs, PANTRY_STAPLES
 
 PROFILE_DB = "profiles.json"
 
@@ -135,7 +135,6 @@ Use approximately {target} kcal per day (±100 kcal), not exceeding 2800 kcal. K
         st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
         st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
 
-        # Pantry emoji row
         used_pantry = [item for item in ingredients.keys() if any(x in item for x in PANTRY_STAPLES)]
         if used_pantry:
             emoji_map = {
