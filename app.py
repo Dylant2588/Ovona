@@ -1,11 +1,8 @@
-
 import streamlit as st
 import os
 import json
-import pandas as pd
-import altair as alt
 from meal_plan import generate_meal_plan
-from ingredients import extract_ingredients, estimate_costs, PANTRY_STAPLES
+from ingredients import extract_ingredients, estimate_costs
 
 PROFILE_DB = "profiles.json"
 
@@ -48,6 +45,7 @@ if not st.session_state.profile:
                 "dislikes": dislikes
             }
             st.session_state.profile = profile
+            # Save to disk
             db = {}
             if os.path.exists(PROFILE_DB):
                 with open(PROFILE_DB, "r") as f:
@@ -69,10 +67,12 @@ days = st.slider("Number of days", 1, 7, 5)
 
 if st.button("Generate Plan"):
     with st.spinner("Generating your plan..."):
+        # Calculate maintenance calories
         maint = (24 if profile["gender"] == "Male" else 22) * profile["weight"]
         mult_map = {"Sedentary": 1.2, "Lightly Active": 1.375, "Active": 1.55, "Athlete": 1.725}
         mult = mult_map.get(profile["lifestyle"], 1.2)
         daily_maint = int(maint * mult)
+        # Adjust target based on goal
         if profile["goal"] == "Lose fat":
             target = daily_maint - 500
         elif profile["goal"] == "Build muscle":
@@ -80,14 +80,49 @@ if st.button("Generate Plan"):
         else:
             target = daily_maint
 
-        prompt = f'''
+        # Build the prompt
+        prompt = f"""
 Generate a {days}-day meal plan for a {profile['gender']} named {profile['name']} who weighs {profile['weight']} kg, lives a {profile['lifestyle']} lifestyle, and wants to {profile['goal']}.
 Allergies: {profile['allergies']}. Diet type: {profile['diet_type']}. Avoid: {profile['dislikes']}.
 
 Use approximately {target} kcal per day (±100 kcal), not exceeding 2800 kcal. Keep meals simple, affordable, and nutrient-dense for an active UK adult.
-'''
+
+Prefer affordable ingredients: chicken, turkey, tuna, eggs, oats, lentils, beans, rice, veg.
+Avoid: luxury meats (steak, salmon), excessive snacks, duplicate high-calorie items.
+
+Quantities must reflect **weekly totals**. Use UK-friendly shopping formats like:
+- Chicken breast – 1.2 kg
+- Eggs – 12
+- Brown rice – 1 kg
+- Milk – 2L semi-skimmed
+
+Ensure accurate tracking of usage per ingredient. Do not list large quantities in the shopping list if only a small portion is used.
+At the end of the plan, **sum up the total quantity used per ingredient** for the entire plan and base the shopping list on that.
+
+For each day, use exactly this structure:
+
+Day X
+  Breakfast (YYY kcal): Meal description
+  Lunch (YYY kcal): Meal description
+  Dinner (YYY kcal): Meal description
+  Total: ZZZ kcal
+  Ingredients: item1 (qty), item2 (qty), …
+
+At the end, include a Weekly Shopping List grouped by category, e.g.:
+
+Meat
+  - Chicken breast – 1 kg
+  - Turkey mince – 500g
+
+Vegetables
+  - Carrots – 1 kg
+  - Broccoli – 500g
+
+Ensure realistic servings, precise quantities, and simple cooking methods.
+"""
         plan = generate_meal_plan(prompt, st.secrets["OPENAI_API_KEY"])
 
+    # Display plan in expandable format
     st.markdown("---")
     st.subheader("📋 Meal Plan")
     days_output = plan.split("Day ")
@@ -96,55 +131,44 @@ Use approximately {target} kcal per day (±100 kcal), not exceeding 2800 kcal. K
         with st.expander(f"📅 Day {header}"):
             st.markdown(f"```{day}```")
 
+    # Parse ingredients & calories
     try:
-        ingredients, calories = extract_ingredients(plan)
+        result = extract_ingredients(plan)
+        if isinstance(result, tuple) and len(result) == 2:
+            ingredients, calories = result
+        else:
+            ingredients = result if isinstance(result, list) else []
+            calories = {}
     except Exception as e:
         st.error(f"Failed to parse meal plan: {e}")
-        ingredients, calories = {}, {}
+        ingredients, calories = [], {}
 
-    st.write("🧪 Debug:")
-    st.json({"calories": calories, "ingredient_groups": len(ingredients)})
-
+    # Show calories per day
     if calories:
         st.subheader("🔥 Calories Per Day")
         for day, cals in sorted(calories.items()):
-            st.write(f"{day}: {cals} kcal")
+            st.write(f"Day {day}: {cals} kcal")
 
+        # Plot bar chart of calorie intake
+        import pandas as pd
         cal_df = pd.DataFrame({"Day": list(calories.keys()), "Calories": list(calories.values())})
-        target_line = target
+        cal_df = cal_df.set_index("Day")
         st.subheader("📊 Weekly Calorie Breakdown")
-        chart = alt.Chart(cal_df).mark_bar(color="#4CAF50").encode(
-            x=alt.X("Day", sort=list(calories.keys())),
-            y=alt.Y("Calories")
-        ).properties(width=600, height=400)
-        line = alt.Chart(pd.DataFrame({"y": [target_line]})).mark_rule(
-            color="red", strokeDash=[5, 5]
-        ).encode(y="y")
-        text = alt.Chart(cal_df).mark_text(
-            align="center", dy=-10, size=12
-        ).encode(
-            x="Day",
-            y="Calories",
-            text="Calories"
-        )
-        st.altair_chart(chart + line + text, use_container_width=True)
-
-   try:
-    shopping_list, total_cost = estimate_costs(ingredients)
-except Exception as e:
-    st.error(f"Failed to estimate costs: {e}")
-    shopping_list, total_cost = [], 0.0
-        st.subheader("🛒 Weekly Shopping List & Estimated Cost")
-        st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
-        st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
-
-        used_pantry = [item for item in ingredients.keys() if any(x in item for x in PANTRY_STAPLES)]
-        if used_pantry:
-            emoji_map = {
-                "olive oil": "🫒", "salt": "🧂", "pepper": "🌶️", "soy sauce": "🍶",
-                "lemon juice": "🍋", "vinegar": "🧴", "spices": "🧂"
-            }
-            emojis = " ".join(emoji_map.get(item, "🧂") for item in used_pantry)
-            st.markdown(f"**Pantry staples used:** {emojis}")
+        st.bar_chart(cal_df)
     else:
-        st.warning("No ingredients found. No shopping list available.")
+        st.write("No calorie data available.")
+
+    # Shopping list & cost
+    try:
+        shopping_list, total_cost = estimate_costs(ingredients)
+    except Exception as e:
+        st.error("Failed to estimate costs: {}".format(e))
+        shopping_list, total_cost = [], 0.0
+    st.subheader("🛒 Weekly Shopping List & Estimated Cost")
+    st.markdown("\n".join(shopping_list))
+    st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
+    st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
+
+    # Raw output
+    st.subheader("🧾 Raw Plan Output")
+    st.code(plan)
