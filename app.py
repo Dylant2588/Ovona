@@ -113,21 +113,35 @@ Ensure realistic servings, precise quantities, and simple cooking methods.
 """
         plan = generate_meal_plan(prompt, st.secrets["OPENAI_API_KEY"])
 
+      # Display the raw plan
     st.markdown("---")
     st.subheader("📋 Meal Plan")
     st.code(plan)
 
-    ingredients, calories = extract_ingredients(plan)
+    # ————————————————
+    # Parse ingredients & calories (with error handling)
+    # ————————————————
+    try:
+        ingredients, calories = extract_ingredients(plan)
+    except Exception as e:
+        st.error(f"Failed to parse meal plan: {e}")
+        ingredients, calories = [], {}
 
+    # Show calories per day
     st.subheader("🔥 Calories Per Day")
-    for day, cals in calories.items():
-        st.write(f"Day {day}: {cals} kcal")
+    if calories:
+        for day, cals in calories.items():
+            st.write(f"Day {day}: {cals} kcal")
+    else:
+        st.write("No calorie data available.")
 
-    shopping_list, total_cost = estimate_costs(ingredients)
+    # Show shopping list & cost
     st.subheader("🛒 Weekly Shopping List & Estimated Cost")
+    shopping_list, total_cost = estimate_costs(ingredients)
     st.markdown("\n".join(shopping_list))
     st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
-    st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
+    st.download_button("📥 Download Shopping List", "\n".join(shopping_list),
+                      file_name="shopping_list.txt")
 
     st.subheader("🧾 Raw Plan Output")
     st.code(plan)
