@@ -122,14 +122,12 @@ Ensure realistic servings, precise quantities, and simple cooking methods.
 """
         plan = generate_meal_plan(prompt, st.secrets["OPENAI_API_KEY"])
 
-    # Display plan
+    # Display plan in expandable format
     st.markdown("---")
     st.subheader("📋 Meal Plan")
-    # Show plan in collapsible format by day
     days_output = plan.split("Day ")
     for day in days_output[1:]:
-        header = day.split("
-")[0].strip()
+        header = day.split("\n")[0].strip()
         with st.expander(f"📅 Day {header}"):
             st.markdown(f"```{day}```")
 
