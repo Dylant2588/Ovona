@@ -149,38 +149,39 @@ Ensure realistic servings, precise quantities, and simple cooking methods.
         for day, cals in sorted(calories.items()):
             st.write(f"Day {day}: {cals} kcal")
 
+        # Plot bar chart of calorie intake using Altair
         import altair as alt
-import pandas as pd
+        import pandas as pd
+        cal_df = pd.DataFrame({
+            "Day": list(calories.keys()),
+            "Calories": list(calories.values())
+        })
+        target_line = target  # daily calorie goal
+        st.subheader("📊 Weekly Calorie Breakdown")
+        chart = alt.Chart(cal_df).mark_bar(color="#4CAF50").encode(
+            x=alt.X("Day", sort=list(calories.keys())),
+            y=alt.Y("Calories")
+        ).properties(
+            width=600,
+            height=400,
+            title="Daily Calorie Intake"
+        )
+        line = alt.Chart(pd.DataFrame({"y": [target_line]})).mark_rule(
+            color="red", strokeDash=[5, 5]
+        ).encode(y="y")
+        text = alt.Chart(cal_df).mark_text(
+            align="center", dy=-10, size=12
+        ).encode(
+            x="Day",
+            y="Calories",
+            text="Calories"
+        )
+        st.altair_chart(chart + line + text, use_container_width=True)
+    st.subheader("🛒 Weekly Shopping List & Estimated Cost")
+    st.markdown("\n".join(shopping_list))
+    st.markdown(f"**Estimated Total Cost: ~£{total_cost:.2f}**")
+    st.download_button("📥 Download Shopping List", "\n".join(shopping_list), file_name="shopping_list.txt")
 
-cal_df = pd.DataFrame({
-    "Day": list(calories.keys()),
-    "Calories": list(calories.values())
-})
-
-# Create Altair bar chart
-target_line = target  # from earlier
-st.subheader("📊 Weekly Calorie Breakdown")
-
-chart = alt.Chart(cal_df).mark_bar(color="#4CAF50").encode(
-    x=alt.X("Day", sort=list(calories.keys())),
-    y=alt.Y("Calories")
-).properties(
-    width=600,
-    height=400,
-    title="Daily Calorie Intake"
-)
-
-# Add target line overlay
-line = alt.Chart(pd.DataFrame({
-    "y": [target_line]
-})).mark_rule(color="red", strokeDash=[5, 5]).encode(y="y")
-
-text = alt.Chart(cal_df).mark_text(
-    align="center", dy=-10, size=12
-).encode(
-    x="Day",
-    y="Calories",
-    text="Calories"
-)
-
-st.altair_chart(chart + line + text, use_container_width=True)
+    # Raw output
+    st.subheader("🧾 Raw Plan Output")
+    st.code(plan)
