@@ -85,18 +85,17 @@ if st.button("Generate Plan"):
 Generate a {days}-day meal plan for a {profile['gender']} named {profile['name']} who weighs {profile['weight']} kg, lives a {profile['lifestyle']} lifestyle, and wants to {profile['goal']}.
 Allergies: {profile['allergies']}. Diet type: {profile['diet_type']}. Avoid: {profile['dislikes']}.
 
-Use approximately {target} kcal per day (±100 kcal). Use moderate portions for an average adult. Do not exceed 2800 kcal total unless specifically instructed.
+Use approximately {target} kcal per day (±100 kcal), not exceeding 2800 kcal. Keep meals simple, affordable, and nutrient-dense for an active UK adult.
 
-Each meal should be:
-- Simple
-- Contain ingredients that are low-cost in the UK
-- Avoid premium meats (limit beef/salmon/prawns)
-- Prioritize chicken, turkey, eggs, beans, lentils, oats, rice, and vegetables
+Prefer affordable ingredients: chicken, turkey, tuna, eggs, oats, lentils, beans, rice, veg.
 
-All ingredients must be listed with UK-friendly shopping quantities. For example:
-- Eggs – 6 eggs
-- Brown rice – 1kg
-- Chicken breast – 500g
+Avoid: luxury meats (steak, salmon), excessive snacks, duplicate high-calorie items.
+
+Quantities must reflect **weekly totals**. Use UK-friendly shopping formats like:
+- Chicken breast – 1.2 kg
+- Eggs – 12
+- Brown rice – 1 kg
+- Milk – 2L semi-skimmed
 
 Ensure realistic servings, precise quantities, and simple cooking methods. And precise calories
 """
