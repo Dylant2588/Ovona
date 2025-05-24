@@ -1,0 +1,74 @@
+{
+  "chicken breast": {
+    "product": "Tesco Chicken Breast Fillets 1kg",
+    "price": 5.50,
+    "unit": "per kg",
+    "url": "https://www.tesco.com/groceries/en-GB/products/293339500"
+  },
+  "brown rice": {
+    "product": "Tesco Brown Rice 1kg",
+    "price": 1.00,
+    "unit": "per kg",
+    "url": "https://www.tesco.com/groceries/en-GB/products/255202013"
+  },
+  "broccoli": {
+    "product": "Tesco Broccoli Head",
+    "price": 0.80,
+    "unit": "each",
+    "url": "https://www.tesco.com/groceries/en-GB/products/259979998"
+  },
+  "salmon": {
+    "product": "Tesco Salmon Fillets 2 Pack",
+    "price": 4.50,
+    "unit": "per pack",
+    "url": "https://www.tesco.com/groceries/en-GB/products/285139195"
+  },
+  "oats": {
+    "product": "Tesco Porridge Oats 1kg",
+    "price": 1.10,
+    "unit": "per kg",
+    "url": "https://www.tesco.com/groceries/en-GB/products/253875642"
+  },
+  "eggs": {
+    "product": "Tesco Free Range Eggs 6 Pack",
+    "price": 1.35,
+    "unit": "6 eggs",
+    "url": "https://www.tesco.com/groceries/en-GB/products/255264883"
+  },
+  "greek yogurt": {
+    "product": "Tesco Greek Style Yogurt 500g",
+    "price": 1.75,
+    "unit": "per tub",
+    "url": "https://www.tesco.com/groceries/en-GB/products/297275651"
+  },
+  "banana": {
+    "product": "Tesco Bananas Loose",
+    "price": 0.18,
+    "unit": "each",
+    "url": "https://www.tesco.com/groceries/en-GB/products/280249303"
+  },
+  "almonds": {
+    "product": "Tesco Whole Almonds 200g",
+    "price": 2.40,
+    "unit": "per bag",
+    "url": "https://www.tesco.com/groceries/en-GB/products/271088983"
+  },
+  "avocado": {
+    "product": "Tesco Ripe & Ready Avocados 2 Pack",
+    "price": 1.90,
+    "unit": "2 pack",
+    "url": "https://www.tesco.com/groceries/en-GB/products/299567219"
+  },
+  "spinach": {
+    "product": "Tesco Baby Spinach 125g",
+    "price": 1.10,
+    "unit": "per bag",
+    "url": "https://www.tesco.com/groceries/en-GB/products/270244526"
+  },
+  "sweet potato": {
+    "product": "Tesco Sweet Potatoes 1kg",
+    "price": 1.40,
+    "unit": "per kg",
+    "url": "https://www.tesco.com/groceries/en-GB/products/275513271"
+  }
+}

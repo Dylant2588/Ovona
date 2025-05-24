@@ -19,60 +19,43 @@ results = {}
 for ingredient in INGREDIENTS:
     print(f"Scraping: {ingredient}")
     search_url = BASE_URL.format(ingredient.replace(" ", "%20"))
-    try:
-        response = requests.get(search_url, headers=HEADERS, timeout=10)
-        if response.status_code != 200:
-            print(f"⚠️ Failed to fetch {ingredient}")
-            results[ingredient] = {
-                "product": "Unavailable",
-                "price": 2.00,
-                "unit": "",
-                "url": None
-            }
-            continue
+    success = False
 
-        soup = BeautifulSoup(response.text, "html.parser")
-        product_card = soup.find("div", class_="product-list--list-item")
+    for attempt in range(2):
+        try:
+            response = requests.get(search_url, headers=HEADERS, timeout=10)
+            if response.status_code != 200:
+                raise Exception(f"Bad status: {response.status_code}")
 
-        if product_card:
-            name_tag = product_card.find("a", class_="styled__Anchor-sc-1xbujuz-0")
-            price_tag = product_card.find("span", class_="value")
-            unit_tag = product_card.find("span", class_="weight")
+            soup = BeautifulSoup(response.text, "html.parser")
+            product_card = soup.find("div", class_="product-list--list-item")
 
-            if name_tag and price_tag:
-                name = name_tag.text.strip()
-                price = float(price_tag.text.strip())
-                url = "https://www.tesco.com" + name_tag.get("href")
-                unit = unit_tag.text.strip() if unit_tag else ""
-                results[ingredient] = {
-                    "product": name,
-                    "price": price,
-                    "unit": unit,
-                    "url": url
-                }
-            else:
-                print(f"⚠️ Missing tags for {ingredient}")
-                results[ingredient] = {
-                    "product": "Not found",
-                    "price": 2.00,
-                    "unit": "",
-                    "url": None
-                }
-        else:
-            print(f"⚠️ No product card found for {ingredient}")
-            results[ingredient] = {
-                "product": "Not found",
-                "price": 2.00,
-                "unit": "",
-                "url": None
-            }
+            if product_card:
+                name_tag = product_card.find("a", class_="styled__Anchor-sc-1xbujuz-0")
+                price_tag = product_card.find("span", class_="value")
+                unit_tag = product_card.find("span", class_="weight")
 
-        time.sleep(1.5)  # be nice to Tesco
+                if name_tag and price_tag:
+                    name = name_tag.text.strip()
+                    price = float(price_tag.text.strip())
+                    url = "https://www.tesco.com" + name_tag.get("href")
+                    unit = unit_tag.text.strip() if unit_tag else ""
+                    results[ingredient] = {
+                        "product": name,
+                        "price": price,
+                        "unit": unit,
+                        "url": url
+                    }
+                    success = True
+                    break
+            print(f"⚠️ No valid product data for {ingredient} (attempt {attempt + 1})")
+        except Exception as e:
+            print(f"❌ Error on {ingredient} (attempt {attempt + 1}): {e}")
+        time.sleep(5)  # Wait between retries
 
-    except Exception as e:
-        print(f"❌ Error fetching {ingredient}: {e}")
+    if not success:
         results[ingredient] = {
-            "product": "Error",
+            "product": "Unavailable",
             "price": 2.00,
             "unit": "",
             "url": None

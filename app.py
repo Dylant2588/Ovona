@@ -32,7 +32,7 @@ Generate a {days}-day meal plan for:
 - Diet type: {diet_type}
 - Dislikes: {dislikes}
 
-Include breakfast, lunch, dinner with calorie estimates. Simple meals.
+Include breakfast, lunch, dinner with calorie estimates. Simple meals. Also make sure to alternate key meals for humans. I.e. fish for omegas, steak for iron, etc.
 """
         plan = generate_meal_plan(prompt, st.secrets["OPENAI_API_KEY"])
         st.markdown("---")
