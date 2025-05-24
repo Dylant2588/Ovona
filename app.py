@@ -96,6 +96,9 @@ Quantities must reflect **weekly totals**. Use UK-friendly shopping formats like
 - Brown rice – 1 kg
 - Milk – 2L semi-skimmed
 
+Ensure accurate tracking of usage per ingredient. Do not list large quantities in the shopping list if only a small portion is used.
+At the end of the plan, **sum up the total quantity used per ingredient** for the entire plan and base the shopping list on that.
+
 For each day, use exactly this structure:
 
 Day X
@@ -122,7 +125,13 @@ Ensure realistic servings, precise quantities, and simple cooking methods.
     # Display plan
     st.markdown("---")
     st.subheader("📋 Meal Plan")
-    st.code(plan)
+    # Show plan in collapsible format by day
+    days_output = plan.split("Day ")
+    for day in days_output[1:]:
+        header = day.split("
+")[0].strip()
+        with st.expander(f"📅 Day {header}"):
+            st.markdown(f"```{day}```")
 
     # Parse ingredients & calories
     try:
