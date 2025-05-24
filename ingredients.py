@@ -10,7 +10,6 @@ with open("tesco_prices.json", "r") as f:
 
 PANTRY_STAPLES = {"olive oil", "salt", "pepper", "soy sauce", "vinegar", "lemon juice", "spices"}
 
-# Unit mapping for vague terms
 UNIT_CONVERSIONS = {
     "handful": ("g", 30),
     "scoop": ("g", 30),
@@ -24,20 +23,17 @@ UNIT_CONVERSIONS = {
 }
 
 def parse_natural_line(line: str) -> Tuple[str, str, float]:
-    # Match patterns like: "1 cup spinach", "2 eggs", "30g almonds"
     match = re.match(r"[-*]\s*(\d+(?:\.\d+)?)(\s*[a-zA-Z]+)?\s+(.+)", line.strip())
     if match:
         amount = float(match.group(1))
         raw_unit = (match.group(2) or "").strip().lower()
         name = match.group(3).strip().lower().rstrip(".,")
-
-        # If unit is vague like "handful", convert
         if raw_unit in UNIT_CONVERSIONS:
             unit, factor = UNIT_CONVERSIONS[raw_unit]
             return name, unit, amount * factor
         elif raw_unit in {"g", "kg", "ml", "l", "tbsp", "tsp"}:
             return name, raw_unit, amount
-        elif raw_unit:  # catch all as 'unit' for now
+        elif raw_unit:
             return name, raw_unit, amount
         else:
             return name, "", amount
@@ -47,7 +43,7 @@ def is_valid_ingredient_line(line: str) -> bool:
     return bool(re.match(r"[-*]\s*(\d+).*", line.strip()))
 
 def clean_name(raw: str) -> str:
-    return raw.lower().split(" with ")[0].split(" and ")[0].strip(" -:")
+    return raw.lower().split(" with ")[0].split(" and ")[0].strip(" -:,")
 
 def extract_ingredients(text: str) -> Tuple[Dict[str, Dict[str, float]], Dict[str, int]]:
     ingredients = defaultdict(lambda: defaultdict(float))
@@ -75,7 +71,7 @@ def extract_ingredients(text: str) -> Tuple[Dict[str, Dict[str, float]], Dict[st
 
     return ingredients, calories_by_day
 
-ddef estimate_costs(grouped_ingredients: Dict[str, Dict[str, float]]) -> Tuple[List[str], float]:
+def estimate_costs(grouped_ingredients: Dict[str, Dict[str, float]]) -> Tuple[List[str], float]:
     total_cost = 0.0
     shopping_list = []
     fallback_cost = 2.5
@@ -84,20 +80,16 @@ ddef estimate_costs(grouped_ingredients: Dict[str, Dict[str, float]]) -> Tuple[L
         is_pantry = any(pantry in item for pantry in PANTRY_STAPLES)
         if is_pantry:
             continue
-
         for unit, quantity in unit_map.items():
             display_qty = f"{quantity:.0f}{unit}" if unit else f"{int(quantity)}"
             price = TESCO_PRICES.get(item, fallback_cost)
-
             label = f"{item.title()} – {display_qty}"
             if item not in TESCO_PRICES:
                 label += "  *"
-            
             shopping_list.append(label)
-
             try:
                 total_cost += float(price) * float(quantity)
             except Exception:
-                total_cost += fallback_cost  # Add fallback in case of error
+                total_cost += fallback_cost
 
     return shopping_list, float(total_cost)
